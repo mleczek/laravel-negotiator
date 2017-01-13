@@ -1,0 +1,32 @@
+{
+    "name": "mleczek/laravel-xml",
+    "description": "Content negotiation for Laravel API",
+    "type": "library",
+    "keywords": ["laravel", "xml", "content", "negotiation"],
+    "homepage": "https://github.com/mleczek/laravel-xml",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Wojciech Mleczek",
+            "email": "mleczek.wojtek@gmail.com"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^5.3",
+        "illuminate/http": "^5.3"
+    },
+    "require-dev": {
+    	"phpunit/phpunit": "~5.7",
+        "mockery/mockery": "~0.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mleczek\\Negotiator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mleczek\\Negotiator\\Tests\\": "tests/"
+        }
+    }
+}
