@@ -13,11 +13,13 @@
     ],
     "require": {
         "illuminate/support": "^5.3",
-        "illuminate/http": "^5.3"
+        "illuminate/http": "^5.3",
+        "mleczek/xml": "^1.2"
     },
     "require-dev": {
     	"phpunit/phpunit": "~5.7",
-        "mockery/mockery": "~0.9"
+        "mockery/mockery": "~0.9",
+        "illuminate/database": "^5.3"
     },
     "autoload": {
         "psr-4": {

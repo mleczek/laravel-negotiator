@@ -8,10 +8,16 @@ use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Http\Request;
 use Mleczek\Negotiator\Contracts\ContentNegotiationHandler;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ContentNegotiation
 {
-    protected $app;
+    const UNSUPPORTED_TYPE_CODE = 415;
+
+    /**
+     * @var Container
+     */
+    protected $container;
 
     /**
      * @var ContentNegotiationHandler[]
@@ -23,11 +29,11 @@ class ContentNegotiation
     /**
      * ContentNegotiation constructor.
      *
-     * @param Container $app
+     * @param Container $container
      */
-    public function __construct(Container $app)
+    public function __construct(Container $container)
     {
-        $this->app = $app;
+        $this->container = $container;
     }
 
     /**
@@ -46,13 +52,21 @@ class ContentNegotiation
      *
      * @param Request $request
      * @param mixed $data
+     * @param array $values Const values for specific types, eq. ['application/xml' => '<const/>']
      * @return mixed
      */
-    public function negotiate(Request $request, $data)
+    public function negotiate(Request $request, $data, array $values = [])
     {
+        // Const values for specific types
+        $type = $request->prefers(array_keys($values));
+        if (key_exists($type, $values)) {
+            return $values[$type];
+        }
+
+        // Automatic conversion using defined handlers
         $type = $request->prefers($this->contentTypes());
-        if(is_null($type)) {
-            // TODO: Throw exception (content type not supported)
+        if(!key_exists($type, $this->handlers)) {
+            throw new HttpException(self::UNSUPPORTED_TYPE_CODE, 'Cannot return response in specified format, use/change the "Accepts" header.');
         }
 
         return $this->handlers[$type]->handle($data);
@@ -67,7 +81,7 @@ class ContentNegotiation
     public function extend($contentTypes, Closure $closure)
     {
         $contentTypes = (array) $contentTypes;
-        $handler = $closure->call($this, $this->app);
+        $handler = $this->container->call($closure, [$this->container]);
 
         foreach($contentTypes as $type) {
             $this->handlers[$type] = $handler;
