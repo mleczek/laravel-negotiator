@@ -5,6 +5,7 @@ namespace Mleczek\Negotiator\Tests\Mocks;
 
 
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\Response;
 use Illuminate\Support\Traits\Macroable;
 
 class ResponseFactoryMock implements ResponseFactory
@@ -21,7 +22,7 @@ class ResponseFactoryMock implements ResponseFactory
      */
     public function make($content = '', $status = 200, array $headers = [])
     {
-        // TODO: Implement make() method.
+        return new Response($content, $status, $headers);
     }
 
     /**

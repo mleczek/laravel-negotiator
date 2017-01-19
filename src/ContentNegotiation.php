@@ -6,7 +6,9 @@ namespace Mleczek\Negotiator;
 
 use Closure;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Mleczek\Negotiator\Contracts\ContentNegotiationHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -20,6 +22,11 @@ class ContentNegotiation
     protected $container;
 
     /**
+     * @var ResponseFactory
+     */
+    protected $response;
+
+    /**
      * @var ContentNegotiationHandler[]
      */
     protected $handlers = [
@@ -31,9 +38,10 @@ class ContentNegotiation
      *
      * @param Container $container
      */
-    public function __construct(Container $container)
+    public function __construct(Container $container, ResponseFactory $response)
     {
         $this->container = $container;
+        $this->response = $response;
     }
 
     /**
@@ -53,23 +61,28 @@ class ContentNegotiation
      * @param Request $request
      * @param mixed $data
      * @param array $values Const values for specific types, eq. ['application/xml' => '<const/>']
-     * @return mixed
+     * @return Response
      */
     public function negotiate(Request $request, $data, array $values = [])
     {
+        $availableTypes = array_keys($values) + $this->contentTypes();
+        $preferedType = $request->prefers($availableTypes);
+
         // Const values for specific types
-        $type = $request->prefers(array_keys($values));
-        if (key_exists($type, $values)) {
-            return $values[$type];
+        if (key_exists($preferedType, $values)) {
+            $content = $values[$preferedType];
+            return $this->response->make($content)
+                ->header('Content-Type', $preferedType);
         }
 
         // Automatic conversion using defined handlers
-        $type = $request->prefers($this->contentTypes());
-        if(!key_exists($type, $this->handlers)) {
+        if(!key_exists($preferedType, $this->handlers)) {
             throw new HttpException(self::UNSUPPORTED_TYPE_CODE, 'Cannot return response in specified format, use/change the "Accepts" header.');
         }
 
-        return $this->handlers[$type]->handle($data);
+        $content = $this->handlers[$preferedType]->handle($data);
+        return $this->response->make($content)
+            ->header('Content-Type', $preferedType);
     }
 
     /**

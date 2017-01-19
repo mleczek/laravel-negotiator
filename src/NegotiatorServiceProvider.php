@@ -7,6 +7,7 @@ namespace Mleczek\Negotiator;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\ServiceProvider;
 use Mleczek\Negotiator\Handlers\JsonHandler;
 use Mleczek\Negotiator\Handlers\XmlHandler;
@@ -18,11 +19,10 @@ class NegotiatorServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(Container $container, ResponseFactory $response)
     {
-        $this->app->singleton(ContentNegotiation::class, function (Container $container) {
-            return new ContentNegotiation($container);
-        });
+        $negotiator = new ContentNegotiation($container, $response);
+        $this->app->instance(ContentNegotiation::class, $negotiator);
     }
 
     /**
@@ -46,7 +46,7 @@ class NegotiatorServiceProvider extends ServiceProvider
 
         // Content negotiation  macro:
         // response()->negotiate($data)
-        $response->macro('negotiate', function ($data) use ($negotiator, $request) {
+        $response->macro('negotiate', function ($data) use ($negotiator, $request, $response) {
             return $negotiator->negotiate($request, $data);
         });
     }

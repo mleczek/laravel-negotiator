@@ -5,7 +5,6 @@ namespace Mleczek\Negotiator\Tests;
 
 
 use Illuminate\Container\Container;
-use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Traits\Macroable;
 use Mleczek\Negotiator\ContentNegotiation;
@@ -24,6 +23,11 @@ class ContentNegotiationTest extends TestCase
     protected $app;
 
     /**
+     * @var ResponseFactory
+     */
+    protected $response;
+
+    /**
      * @var NegotiatorServiceProvider
      */
     protected $provider;
@@ -33,13 +37,15 @@ class ContentNegotiationTest extends TestCase
         parent::setUp();
 
         $this->app = new Container();
-        $this->app->singleton('app', 'Illuminate\Container\Container');
-        $this->provider = new NegotiatorServiceProvider($this->app);
+        $this->app->singleton('app', Container::class);
+
+        $this->response = new ResponseFactoryMock();
+        $this->provider = new NegotiatorServiceProvider($this->app, $this->response);
     }
 
     public function testFacade()
     {
-        $this->provider->register();
+        $this->provider->register($this->app, $this->response);
 
         ContentNegotiationFacade::setFacadeApplication($this->app);
         ContentNegotiationFacade::contentTypes();
@@ -47,7 +53,7 @@ class ContentNegotiationTest extends TestCase
 
     public function testDefaultSupportedContentTypes()
     {
-        $negotiator = new ContentNegotiation($this->app);
+        $negotiator = new ContentNegotiation($this->app, $this->response);
         $response = new ResponseFactoryMock();
         $request = $this->createMock(Request::class);
 
@@ -77,32 +83,32 @@ class ContentNegotiationTest extends TestCase
         $request = $this->createMock(Request::class);
         $request->expects($this->once())->method('prefers')->willReturn('application/xml');
 
-        $negotiator = new ContentNegotiation($this->app);
+        $negotiator = new ContentNegotiation($this->app, $this->response);
 
         $result = $negotiator->negotiate($request, [], ['application/xml' => $expected]);
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $result->content());
     }
 
     public function testNegotiateWithSuitableType()
     {
         $expected = '{"id":5}';
         $request = $this->createMock(Request::class);
-        $request->expects($this->exactly(2))->method('prefers')->willReturn('application/json');
+        $request->expects($this->once())->method('prefers')->willReturn('application/json');
 
-        $negotiator = new ContentNegotiation($this->app);
+        $negotiator = new ContentNegotiation($this->app, $this->response);
         $negotiator->extend('application/json', function() {
             return new JsonHandler();
         });
 
         $result = $negotiator->negotiate($request, ['id' => 5], ['unknown/type' => '...']);
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $result->content());
     }
 
     public function testUnsupportedType()
     {
         $request = $this->createMock(Request::class);
-        $request->expects($this->exactly(2))->method('prefers')->willReturn('application/json');
-        $negotiator = new ContentNegotiation($this->app);
+        $request->expects($this->once())->method('prefers')->willReturn('application/json');
+        $negotiator = new ContentNegotiation($this->app, $this->response);
 
         $this->expectException(HttpException::class);
         $negotiator->negotiate($request, []);
