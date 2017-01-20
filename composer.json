@@ -1,9 +1,9 @@
 {
-    "name": "mleczek/laravel-xml",
+    "name": "mleczek/laravel-negotiator",
     "description": "Content negotiation for Laravel API",
     "type": "library",
     "keywords": ["laravel", "xml", "content", "negotiation"],
-    "homepage": "https://github.com/mleczek/laravel-xml",
+    "homepage": "https://github.com/mleczek/laravel-negotiator",
     "license": "MIT",
     "authors": [
         {
