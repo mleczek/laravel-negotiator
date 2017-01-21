@@ -19,10 +19,9 @@ class NegotiatorServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register(Container $container, ResponseFactory $response)
+    public function register()
     {
-        $negotiator = new ContentNegotiation($container, $response);
-        $this->app->instance(ContentNegotiation::class, $negotiator);
+        $this->app->singleton(ContentNegotiation::class, ContentNegotiation::class);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Mleczek\Negotiator\Tests;
 
 
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Traits\Macroable;
 use Mleczek\Negotiator\ContentNegotiation;
@@ -45,7 +46,9 @@ class ContentNegotiationTest extends TestCase
 
     public function testFacade()
     {
-        $this->provider->register($this->app, $this->response);
+        $this->app->instance(\Illuminate\Contracts\Container\Container::class, $this->app);
+        $this->app->instance(ResponseFactory::class, $this->response);
+        $this->provider->register();
 
         ContentNegotiationFacade::setFacadeApplication($this->app);
         ContentNegotiationFacade::contentTypes();
